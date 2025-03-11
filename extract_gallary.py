@@ -1,12 +1,14 @@
 import os
 import torch
 import numpy as np
-import scipy.io
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.nn.functional import normalize
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+import cv2
+from sample4geo.dataset.university import U1652DatasetEval
 
-from sample4geo.dataset.university import U1652DatasetEval, get_transforms
 from sample4geo.model import TimmModel
 
 class Config:
@@ -15,11 +17,23 @@ class Config:
     batch_size = 128
     gpu_ids = (0,)
     normalize_features = True
-    gallery_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies/gallery_satellite'
+    gallery_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies_single/gallery_satellite'
     checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     num_workers = 4
+   
+def get_transforms(img_size,
+                   mean=[0.485, 0.456, 0.406],
+                   std=[0.229, 0.224, 0.225]):
+    
 
+    val_transforms = A.Compose([A.Resize(img_size[0], img_size[1], interpolation=cv2.INTER_LINEAR_EXACT, p=1.0),
+                                A.Normalize(mean, std),
+                                ToTensorV2(),
+                                ])
+
+    
+    return val_transforms
 def extract_gallery_features():
     print("Loading model...")
     model = TimmModel(Config.model_path, pretrained=True, img_size=Config.img_size)
@@ -28,7 +42,7 @@ def extract_gallery_features():
     model.eval()
     
     print("Loading gallery dataset...")
-    val_transforms, _, _ = get_transforms((Config.img_size, Config.img_size))
+    val_transforms = get_transforms((Config.img_size, Config.img_size))
     gallery_dataset = U1652DatasetEval(Config.gallery_folder, mode="gallery", transforms=val_transforms)
     gallery_loader = DataLoader(gallery_dataset, batch_size=Config.batch_size, num_workers=Config.num_workers, shuffle=False, pin_memory=True)
     
@@ -45,9 +59,9 @@ def extract_gallery_features():
     gallery_f = np.concatenate(features_list, axis=0)
     gallery_label = np.concatenate(labels_list, axis=0)
     
-    result = {'gallery_f': gallery_f, 'gallery_label': gallery_label}
-    scipy.io.savemat('gallery_features.mat', result)
-    print("Gallery features saved to gallery_features.mat")
+    np.save('gallery_features.npy', gallery_f)
+    np.save('gallery_labels.npy', gallery_label)
+    print("Gallery features saved to gallery_features.npy and gallery_labels.npy")
 
 if __name__ == '__main__':
     extract_gallery_features()
