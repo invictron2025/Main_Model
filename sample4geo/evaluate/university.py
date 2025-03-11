@@ -2,8 +2,11 @@ import torch
 import numpy as np
 from tqdm import tqdm
 import gc
-from ..trainer import predict
-
+import time
+import torch.nn.functional as F
+# from ..trainer import predict
+import scipy.io
+from torch.amp import autocast
 
 def evaluate(config,
                   model,
@@ -14,23 +17,106 @@ def evaluate(config,
                   cleanup=True):
     
     
-    print("Extract Features:")
+    print("Extracting Features:")
+    
     img_features_query, ids_query = predict(config, model, query_loader)
     img_features_gallery, ids_gallery = predict(config, model, gallery_loader)
+
+def predict(config, model, dataloader):
+    device_type = "cuda" if "cuda" in str(config.device) else "cpu"
+    model.eval()
     
-    gl = ids_gallery.cpu().numpy()
-    ql = ids_query.cpu().numpy()
+    # wait before starting progress bar
+    time.sleep(0.1)
+    
+    if config.verbose:
+        bar = tqdm(dataloader, total=len(dataloader))
+    else:
+        bar = dataloader
+        
+    img_features_list = []
+    
+    ids_list = []
+    with torch.no_grad():
+        
+        for img, ids in bar:
+        
+            ids_list.append(ids)
+            
+            with autocast(device_type=device_type):
+         
+                img = img.to(config.device)
+                img_feature = model(img)
+            
+                # normalize is calculated in fp32
+                if config.normalize_features:
+                    img_feature = F.normalize(img_feature, dim=-1)
+            
+            # save features in fp32 for sim calculation
+            img_features_list.append(img_feature.to(torch.float32))
+      
+        # keep Features on GPU
+        img_features = torch.cat(img_features_list, dim=0) 
+        ids_list = torch.cat(ids_list, dim=0).to(config.device)
+        
+    if config.verbose:
+        bar.close()
+        
+    return img_features, ids_list
+
+def evaluate(config,
+                  model,
+                  query_loader,
+                  gallery_loader,
+                  ranks=[1, 5, 10],
+                  step_size=1000,
+                  cleanup=True):
+    
+    
+    print("Extracting Features:")
+    
+    img_features_query, ids_query = predict(config, model, query_loader)
+    img_features_gallery, ids_gallery = predict(config, model, gallery_loader)
+    # Convert to NumPy
+    query_f = img_features_query.cpu().numpy()
+    query_label = ids_query.cpu().numpy()
+    gallery_f = img_features_gallery.cpu().numpy()
+    gallery_label = ids_gallery.cpu().numpy()
+    
+   
+    
+    # Save results in .mat file
+    result = {
+        'query_f': query_f,
+        'query_label': query_label,
+        'gallery_f': gallery_f,
+        'gallery_label': gallery_label,
+        
+    }
+    
+    scipy.io.savemat('pytorch_result.mat', result)
+    print("Results saved to pytorch_result.mat")
     
     print("Compute Scores:")
+    cmc_top1_indices = []
+    cmc_top1_labels = []
     CMC = torch.IntTensor(len(ids_gallery)).zero_()
     ap = 0.0
     for i in tqdm(range(len(ids_query))):
-        ap_tmp, CMC_tmp = eval_query(img_features_query[i], ql[i], img_features_gallery, gl)
+        ap_tmp, CMC_tmp = eval_query(img_features_query[i], query_label[i], img_features_gallery, gallery_label)
+
         if CMC_tmp[0]==-1:
             continue
         CMC = CMC + CMC_tmp
         ap += ap_tmp
-    
+        if CMC_tmp[0] == 1:
+            cmc_top1_indices.append(i)
+            cmc_top1_labels.append(query_label[i])  # Extract the label
+    # Save indices, labels, and paths to a text file
+    with open('cmc_top1_indices_labels_paths.txt', 'w') as f:
+        for index, label in zip(cmc_top1_indices, cmc_top1_labels):
+            f.write(f"{index}, {label}\n")
+        
     AP = ap/len(ids_query)*100
     
     CMC = CMC.float()
