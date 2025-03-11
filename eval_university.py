@@ -44,16 +44,9 @@ class Configuration:
 
 config = Configuration() 
 
-if config.dataset == 'U1652-D2S':
-    config.query_folder_train = './data/U1652/train/satellite'
-    config.gallery_folder_train = './data/U1652/train/drone'   
-    config.query_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/query_drone' 
-    config.gallery_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/gallery_satellite'    
-elif config.dataset == 'U1652-S2D':
-    config.query_folder_train = './data/U1652/train/satellite'
-    config.gallery_folder_train = './data/U1652/train/drone'    
-    config.query_folder_test = './data/U1652/test/query_satellite'
-    config.gallery_folder_test = './data/U1652/test/gallery_drone'
+config.query_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/query_drone' 
+config.gallery_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/gallery_satellite'    
+
 
 
 if __name__ == '__main__':
@@ -66,7 +59,7 @@ if __name__ == '__main__':
 
 
     model = TimmModel(config.model,
-                          pretrained=True,
+                          pretrained=False,
                           img_size=config.img_size)
                           
     data_config = model.get_config()

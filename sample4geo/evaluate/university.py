@@ -8,19 +8,6 @@ import torch.nn.functional as F
 import scipy.io
 from torch.amp import autocast
 
-def evaluate(config,
-                  model,
-                  query_loader,
-                  gallery_loader,
-                  ranks=[1, 5, 10],
-                  step_size=1000,
-                  cleanup=True):
-    
-    
-    print("Extracting Features:")
-    
-    img_features_query, ids_query = predict(config, model, query_loader)
-    img_features_gallery, ids_gallery = predict(config, model, gallery_loader)
 
 def predict(config, model, dataloader):
     device_type = "cuda" if "cuda" in str(config.device) else "cpu"
