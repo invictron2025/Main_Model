@@ -1,94 +1,121 @@
 import os
+import cv2
 import torch
 import numpy as np
-from tqdm import tqdm
-from torch.utils.data import DataLoader
-from torch.nn.functional import normalize
+import pandas as pd
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from sample4geo.dataset.university import U1652DatasetEval
-import cv2
-
+from torch.nn.functional import normalize
 from sample4geo.model import TimmModel
 
 class Config:
     model_path = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
-    batch_size = 1  # Process one query at a time
     gpu_ids = (0,)
     normalize_features = True
-    query_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies_single/query_drone'
+    query_folder = '/home/gpu/Desktop/Data/AirStrip_data/query_drone/9'
     checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    num_workers = 0
     gallery_features_file = 'gallery_features.npy'
     gallery_labels_file = 'gallery_labels.npy'
-   
-def get_transforms(img_size,
-                   mean=[0.485, 0.456, 0.406],
-                   std=[0.229, 0.224, 0.225]):
-    
+    csv_file = '/home/gpu/Desktop/Sample4Geo/drone_airstrip.csv'  # Path to CSV file containing coordinates
 
-    val_transforms = A.Compose([A.Resize(img_size[0], img_size[1], interpolation=cv2.INTER_LINEAR_EXACT, p=1.0),
-                                A.Normalize(mean, std),
-                                ToTensorV2(),
-                                ])
 
-    
-    return val_transforms
+def get_transforms(img_size):
+    return A.Compose([
+        A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR_EXACT),
+        A.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        ToTensorV2(),
+    ])
+
+
 def load_gallery_features():
-    print("Loading gallery features...")
-    gallery_features = np.load(Config.gallery_features_file)
-    gallery_labels = np.load(Config.gallery_labels_file)
-    print(f"Loaded {gallery_features.shape[0]} gallery features.")
+    """Loads gallery features using memory-mapped files for speed."""
+    # print("Loading gallery features (memory-mapped)...")
+    gallery_features = np.load(Config.gallery_features_file, mmap_mode='r')
+    gallery_labels = np.load(Config.gallery_labels_file, mmap_mode='r')
     return gallery_features, gallery_labels
 
-def find_top_k_matches(query_feature, gallery_features, gallery_labels, k=5):
-    scores = gallery_features @ query_feature.T  # Compute similarity scores
-    top_k_indices = np.argsort(scores)[-k:][::-1]  # Get top K indices in descending order
-    
-    top_k_labels = gallery_labels[top_k_indices]  
-    top_k_scores = scores[top_k_indices]  
 
-    return top_k_labels, top_k_scores
+def load_coordinates():
+    """Loads the coordinates CSV file."""
+    # print("Loading coordinates from CSV...")
+    df = pd.read_csv(Config.csv_file)
+    return df.to_numpy()  # Convert to NumPy array for faster indexing
 
-def process_queries():
-    print("Loading model...")
-    model = TimmModel(Config.model_path, pretrained=False, img_size=Config.img_size)  # Disable online loading
-    model.load_state_dict(torch.load(Config.checkpoint, map_location=Config.device), strict=False)
-    model.to(Config.device)
-    model.eval()
-    
-    print("Loading query dataset...")
-    val_transforms = get_transforms((Config.img_size, Config.img_size))
-    query_dataset = U1652DatasetEval(Config.query_folder, mode="query", transforms=val_transforms)
-    query_loader = DataLoader(query_dataset, batch_size=Config.batch_size, num_workers=Config.num_workers, shuffle=False, pin_memory=True)
-    
-    gallery_features, gallery_labels = load_gallery_features()
-    
-    total_queries = 0
-    correct_matches = 0
-    
+
+def find_top_k_matches(query_feature, gallery_features, gallery_labels, k=1):
+    """Efficient similarity search using einsum for fast matmul."""
+    scores = np.einsum('ij,j->i', gallery_features, query_feature)  # Faster than np.dot()
+    top_k_indices = np.argpartition(scores, -k)[-k:]  # Optimized top-k selection
+    return gallery_labels[top_k_indices]
+
+
+def load_model():
+    """Loads the model efficiently and applies optimizations."""
+    # print("Loading model (optimized)...")
+
+    # Use a precompiled TorchScript model if available
+    jit_path = Config.model_path + "_jit.pt"
+    if os.path.exists(jit_path):
+        # print("Using TorchScript compiled model.")
+        model = torch.jit.load(jit_path, map_location=Config.device)
+    else:
+        model = TimmModel(Config.model_path, pretrained=False, img_size=Config.img_size)
+        model.load_state_dict(torch.load(Config.checkpoint, map_location=Config.device), strict=False)
+        model.to(Config.device)
+        model.eval()
+
+        # Save a TorchScript version for future runs
+        example_input = torch.randn(1, 3, Config.img_size, Config.img_size).to(Config.device)
+        traced_model = torch.jit.trace(model, example_input)
+        traced_model.save(jit_path)
+        # print(f"Saved TorchScript model for future use: {jit_path}")
+
+    return model
+
+
+def process_single_query(model, gallery_features, gallery_labels, coordinates):
+    """Loads and processes a single query image, returning coordinates."""
+    # print("Processing query image...")
+
+    # Find the image file
+    img_path = next((os.path.join(Config.query_folder, f) for f in os.listdir(Config.query_folder)
+                     if f.lower().endswith(('.jpg', '.jpeg', '.png'))), None)
+
+    if not img_path:
+        raise FileNotFoundError(f"No image found in {Config.query_folder}")
+
+    # Load and preprocess the image
+    img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)  # Faster loading
+    if img is None:
+        raise ValueError(f"Failed to load image: {img_path}")
+
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    transforms = get_transforms(Config.img_size)
+    img = transforms(image=img)['image'].unsqueeze(0).to(Config.device)
+
+    # Extract query feature
     with torch.no_grad():
-        for img, label in tqdm(query_loader, desc="Processing queries"):
-            total_queries += 1
-            img = img.to(Config.device)
-            query_feature = model(img)
-            if Config.normalize_features:
-                query_feature = normalize(query_feature, dim=-1)
-            query_feature = query_feature.cpu().numpy().squeeze()
-            
-            top_k_labels, top_k_scores = find_top_k_matches(query_feature, gallery_features, gallery_labels, k=5)
-            
-            if label.item() in top_k_labels:
-                correct_idx = np.where(top_k_labels == label.item())[0][0]
-                correct_matches += 1
-                print(f"Query Label: {label.item()}, Correct Match Found: {top_k_labels[correct_idx]}, Confidence: {top_k_scores[correct_idx]}")
-            else:
-                print(f"Query Label: {label.item()}, Not Found in Top K Matches")
-    
-    accuracy = (correct_matches / total_queries) * 100 if total_queries > 0 else 0
-    print(f"Top-K Accuracy: {accuracy:.2f}%")
+        query_feature = model(img)
+        if Config.normalize_features:
+            query_feature = normalize(query_feature, dim=-1)
+        query_feature = query_feature.cpu().numpy().squeeze()
+
+    # Find best match
+    top_k_labels = find_top_k_matches(query_feature, gallery_features, gallery_labels, k=1)
+    best_match_label = top_k_labels[0]
+
+    # Retrieve the coordinates of the matched label
+    matched_coordinates = coordinates[int(best_match_label)]  # Ensure label corresponds to row index
+
+    print(f"Query Image: {os.path.basename(img_path)}, First Place Match: {best_match_label}, Coordinates: {matched_coordinates}")
+
+    return best_match_label, matched_coordinates
+
 
 if __name__ == '__main__':
-    process_queries()
+    model = load_model()
+    gallery_features, gallery_labels = load_gallery_features()
+    coordinates = load_coordinates()
+    process_single_query(model, gallery_features, gallery_labels, coordinates)
