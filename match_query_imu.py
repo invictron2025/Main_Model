@@ -19,7 +19,7 @@ class Config:
     checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_data_file = 'gallery_data.npz'  # Using grid structure
-    search_window = 50  # Search within 50 meters
+   
     max_search_radius = 3  # Search within a grid radius of 3 path/row IDs
 
 def get_transforms(img_size):
@@ -121,6 +121,9 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
     # Get nearby gallery images from structured grid
     nearby_features, metadata = get_nearby_gallery_features(gallery_grid, nearest_path_id, nearest_row_id)
 
+    total_images_in_search_area = len(metadata)
+    print(f"Total images in nearby search area: {total_images_in_search_area}")
+
     # Find best match within the grid search space
     best_match = find_best_match(query_feature, nearby_features, metadata)
 
@@ -135,7 +138,7 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
 if __name__ == '__main__':
     model = load_model()
     gallery_grid = load_gallery_data()
-    last_known_position = (26.509997717887071,80.22732763386951)  # Initial starting coordinates
-    velocity, acceleration, heading = (1, 1, 1)  # Replace with actual IMU data
+    last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
+    velocity, acceleration, heading = (1, 1, 3.14)  # Replace with actual IMU data
     dt = 1
     process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
