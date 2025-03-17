@@ -44,8 +44,8 @@ class Configuration:
 
 config = Configuration() 
 
-config.query_folder_test = '/home/gpu/Desktop/Data/cross_map_data/query_drone' 
-config.gallery_folder_test = '/home/gpu/Desktop/Data/cross_map_data/gallery_satellite'    
+config.query_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/query_drone' 
+config.gallery_folder_test = '/home/gpu/Desktop/Data/campus_data_with_indicies/gallery_satellite'    
 
 
 

@@ -13,7 +13,7 @@ class Config:
     img_size = 384
     gpu_ids = (0,)
     normalize_features = True
-    query_folder = '/home/gpu/Desktop/Data/AirStrip_data/query_drone/9'
+    query_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies/query_drone/2'
     checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_features_file = 'gallery_features.npy'

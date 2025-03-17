@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 #######################################################################
 # Evaluate
 parser = argparse.ArgumentParser(description='Demo')
-parser.add_argument('--query_index', default=30, type=int, help='test_image_index')
-parser.add_argument('--test_dir',default='/home/gpu/Desktop/Data/cross_map_data',type=str, help='./test_data')
+parser.add_argument('--query_index', default=6121, type=int, help='test_image_index')
+parser.add_argument('--test_dir',default='/home/gpu/Desktop/Data/utest',type=str, help='./test_data')
 opts = parser.parse_args()
 
 

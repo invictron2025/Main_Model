@@ -17,7 +17,7 @@ class Config:
     batch_size = 128
     gpu_ids = (0,)
     normalize_features = True
-    gallery_folder = '/home/gpu/Desktop/Data/AirStrip_data/gallery_satellite'
+    gallery_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies/gallery_satellite'
     checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     num_workers = 4
