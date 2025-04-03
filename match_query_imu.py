@@ -11,12 +11,12 @@ from sample4geo.model import TimmModel
 from imu_utils import estimate_position  # Function to estimate position from IMU data
 
 class Config:
-    model_path = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384'
+    model_path = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
     gpu_ids = (0,)
     normalize_features = True
-    query_folder = '/home/gpu/Desktop/Data/hall_10_query_photos/query_drone/0'
-    checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
+    query_folder = '/home/invictron/Model_Work/Main_Model/Data/hall10_data/query_drone/0'
+    checkpoint = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_data_file = 'gallery_data.npz'  # Using grid structure
    
@@ -35,6 +35,7 @@ def load_gallery_data():
     return data  # Structured as {path_id: {row_id: {features, image_name, lat, lon}}}
 
 def find_nearest_grid(estimated_position, gallery_grid):
+    # print (estimated_position)
     """Find nearest Path ID and Row ID in the stored grid based on estimated GPS coordinates."""
     min_dist = float('inf')
     nearest_path_id, nearest_row_id = None, None
@@ -49,7 +50,7 @@ def find_nearest_grid(estimated_position, gallery_grid):
             if distance < min_dist:
                 min_dist = distance
                 nearest_path_id, nearest_row_id = path_id, row_id
-
+    # print(nearest_path_id, nearest_row_id)
     return nearest_path_id, nearest_row_id
 
 def get_nearby_gallery_features(gallery_grid, nearest_path_id, nearest_row_id):
@@ -139,6 +140,6 @@ if __name__ == '__main__':
     model = load_model()
     gallery_grid = load_gallery_data()
     last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
-    velocity, acceleration, heading = (1, 1, 3.14)  # Replace with actual IMU data
+    velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
     dt = 1
     process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)

@@ -9,16 +9,16 @@ from torch.nn.functional import normalize
 from sample4geo.model import TimmModel
 
 class Config:
-    model_path = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384'
+    model_path = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
     gpu_ids = (0,)
     normalize_features = True
-    query_folder = '/home/gpu/Desktop/Data/campus_data_with_indicies/query_drone/2'
-    checkpoint = '/home/gpu/Desktop/Sample4Geo/pretrained/university/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
+    query_folder = '/home/invictron/Model_Work/Main_Model/Data/campus_data_with_indicies/query_drone/2'
+    checkpoint = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_features_file = 'gallery_features.npy'
     gallery_labels_file = 'gallery_labels.npy'
-    csv_file = '/home/gpu/Desktop/Sample4Geo/drone_airstrip.csv'  # Path to CSV file containing coordinates
+    csv_file = '/home/invictron/Model_Work/Main_Model/Data/campus_data_with_indicies/drone_airstrip.csv'  # Path to CSV file containing coordinates
 
 
 def get_transforms(img_size):
