@@ -162,5 +162,12 @@ cython_debug/
 data/
 pretrained/
 .DS_Store
+# Ignore entire directories
 Data/
 university_main/
+
+# Ignore specific file types
+*.npz
+*.npy
+*.pt
+*.pth
