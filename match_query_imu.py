@@ -132,7 +132,7 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
         print(f"No match found within the search grid window. Try expanding the search.")
     else:
         print(f"Query Image: {os.path.basename(img_path)}, Match: {best_match['image_name']}, "
-              f"Estimated Position: {estimated_position}, Match Coordinates: ({best_match['latitude']}, {best_match['longitude']})")
+              f"Estimated IMU Position: {estimated_position}, Match Coordinates: ({best_match['latitude']}, {best_match['longitude']})")
 
     return estimated_position
 
