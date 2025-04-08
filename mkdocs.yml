@@ -1,0 +1,6 @@
+site_name: Cross-View Geo-localization
+theme:
+  name: material  # You can use 'readthedocs' or 'mkdocs' as default
+
+nav:
+  - Home: index.md
