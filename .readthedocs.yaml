@@ -1,3 +1,4 @@
+# .readthedocs.yaml
 version: 2
 
 build:
@@ -5,9 +6,9 @@ build:
   tools:
     python: "3.10"
 
-mkdocs:
-  configuration: mkdocs.yml
-
 python:
   install:
     - requirements: requirements.txt
+
+sphinx:
+  configuration: mkdocs.yml
