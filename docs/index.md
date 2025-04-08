@@ -1,13 +1,4 @@
-# Cross-View Geo-localization
+# Cross-View Geolocalization
 
-This project performs cross-view image matching between drone and satellite imagery for geo-localization.
+Welcome to the documentation for the ML model that performs cross-view geolocalization.
 
-## Features
-- Sample4Geo-based architecture
-- Multi-view image input
-- Hard negative mining
-- GPS-denied navigation
-
-## Installation
-```bash
-pip install -r requirements.txt
