@@ -4,9 +4,9 @@ import shutil
 import subprocess
 
 # Define directories
-test_directory = "/home/invictron/Model_Work/Main_Model/Data/hall10_data/query_drone/0"  # Replace with your test directory path
-processed_directory = "/home/invictron/Model_Work/Main_Model/Data/hall10_data/processed"  # Replace with your processed directory path
-script_path = "/home/invictron/Model_Work/Main_Model/match_query_imu.py"  # Replace with actual path to match_query_imu.py
+test_directory = "./Data/hall10_data/query_drone/0"  # Replace with your test directory path
+processed_directory = "./Data/hall10_data/processed"  # Replace with your processed directory path
+script_path = "./match_query_imu.py"  # Replace with actual path to match_query_imu.py
 
 # Make sure processed directory exists
 if not os.path.exists(processed_directory):
@@ -15,7 +15,7 @@ if not os.path.exists(processed_directory):
 def run_test_model(image_path):
     try:
         # Run match_query_imu.py with the image path as argument
-        result = subprocess.run(['python', script_path, image_path], 
+        result = subprocess.run(['python3', script_path, image_path], 
                               capture_output=True, 
                               text=True)
         

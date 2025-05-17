@@ -12,7 +12,7 @@ from sample4geo.model import TimmModel
 class Configuration:
 
     # Model
-    model: str = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384'
+    model: str = './university_main/convnext_base.fb_in22k_ft_in1k_384'
     
     # Override model image size
     img_size: int = 384
@@ -29,7 +29,7 @@ class Configuration:
     data_folder: str = "./data/U1652"
     
     # Checkpoint to start from
-    checkpoint_start = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
+    checkpoint_start = './university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
   
     # set num_workers to 0 if on Windows
     num_workers: int = 0 if os.name == 'nt' else 4 
@@ -43,8 +43,8 @@ class Configuration:
 
 config = Configuration() 
 
-config.query_folder_test = '/home/invictron/Model_Work/Main_Model/Data/campus_data_with_indicies/query_drone' 
-config.gallery_folder_test = '/home/invictron/Model_Work/Main_Model/Data/campus_data_with_indicies/gallery_satellite'    
+config.query_folder_test = './Data/campus_data_with_indicies/query_drone' 
+config.gallery_folder_test = './Data/campus_data_with_indicies/gallery_satellite'    
 
 if __name__ == '__main__':
 
