@@ -137,9 +137,12 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
     return estimated_position
 
 if __name__ == '__main__':
-    model = load_model()
-    gallery_grid = load_gallery_data()
-    last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
-    velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
-    dt = 1
+    main()
+
+def main(model=load_model(),gallery_grid=load_gallery_data(),last_known_position = (26.5115960437853,80.22629763462655),velocity = 8.570,acceleration=0,heading=3.125,dt=1):
+    # model = load_model()
+    # gallery_grid = load_gallery_data()
+    # last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
+    # velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
+    # dt = 1
     process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
