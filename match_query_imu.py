@@ -11,12 +11,12 @@ from sample4geo.model import TimmModel
 from imu_utils import estimate_position  # Function to estimate position from IMU data
 
 class Config:
-    model_path = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384'
+    model_path = './university_main/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
     gpu_ids = (0,)
     normalize_features = True
-    query_folder = '/home/invictron/Model_Work/Main_Model/Data/hall10_data/query_drone/0'
-    checkpoint = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
+    query_folder = './Data/hall10_data/query_drone/0'
+    checkpoint = './university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     gallery_data_file = 'gallery_data.npz'  # Using grid structure
    

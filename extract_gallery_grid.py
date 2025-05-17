@@ -12,16 +12,16 @@ from sample4geo.model import TimmModel
 import re
 
 class Config:
-    model_path = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384'
+    model_path = './university_main/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
     batch_size = 128
     gpu_ids = (0,)
     normalize_features = True
-    gallery_folder = '/home/invictron/Model_Work/Main_Model/Data/hall10_data/hall10_satellite_photos/gallery_satellite'
-    checkpoint = '/home/invictron/Model_Work/Main_Model/university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
+    gallery_folder = './Data/hall10_data/hall10_satellite_photos/gallery_satellite'
+    checkpoint = './university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     num_workers = 4
-    csv_path = '/home/invictron/Model_Work/Main_Model/Data/hall10_data/gallery_satellite_image_coordinates.csv'
+    csv_path = './Data/hall10_data/gallery_satellite_image_coordinates.csv'
     output_file = 'gallery_data.npz'
 
 def load_coordinates(csv_path):
