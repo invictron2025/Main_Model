@@ -46,5 +46,5 @@ def main(csv_file):
 
 if __name__ == "__main__":
     # Replace with your CSV file name
-    csv_filename = "results/backup2.csv"
+    csv_filename = "result.csv"
     main(csv_filename)

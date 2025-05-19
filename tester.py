@@ -95,7 +95,7 @@ def monitor_directory():
                     print(f"Error processing {image_file}: {str(e)}")
         
         # Wait for 0.1 second before checking again
-        time.sleep(0.1)
+        time.sleep(5)
 
 def main():
     print("Starting at pos",last_pos)
