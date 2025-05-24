@@ -15,7 +15,8 @@ if not os.path.exists(processed_directory):
 
 def run_test_model(image_path):
     try:
-        match_query_imu.main()
+        print( match_query_imu.main())
+
         return True
     except Exception as e:
         print(f"Error running match_query_imu.py: {str(e)}")

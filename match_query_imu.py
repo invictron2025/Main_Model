@@ -9,6 +9,7 @@ from torch.nn.functional import normalize
 from geopy.distance import geodesic
 from sample4geo.model import TimmModel
 from imu_utils import estimate_position  # Function to estimate position from IMU data
+from loftr_offset_estimator import calculate_loftr_offset
 
 class Config:
     model_path = './university_main/convnext_base.fb_in22k_ft_in1k_384'
@@ -81,6 +82,56 @@ def find_best_match(query_feature, nearby_features, metadata):
     best_match_idx = np.argmax(scores)
     return metadata[best_match_idx]
 
+
+import numpy as np
+
+import numpy as np
+import re
+
+def lat_lon_diff_with_adjacent_waypoint(query_feature, nearby_features, metadata):
+    """
+    Finds the best match and compares it to the adjacent waypoint (by image filename index).
+    Returns absolute lat/lon difference.
+    """
+    if len(nearby_features) < 2:
+        print("Not enough data.")
+        return None
+
+    # Step 1: Find best match by score
+    scores = np.einsum('ij,j->i', nearby_features, query_feature)
+    best_idx = np.argmax(scores)
+    best = metadata[best_idx]
+    best_name = best['image_name']
+
+    # Step 2: Extract waypoint index
+    match = re.search(r'waypoint_(\d+)', best_name)
+    if not match:
+        print(f"Could not extract waypoint number from filename: {best_name}")
+        return None
+
+    best_waypoint = int(match.group(1))
+
+    # Step 3: Look for adjacent waypoint (before or after) in metadata
+    adj_name_before = best_name.replace(f"waypoint_{best_waypoint}", f"waypoint_{best_waypoint - 1}")
+    adj_name_after = best_name.replace(f"waypoint_{best_waypoint}", f"waypoint_{best_waypoint + 1}")
+
+    # Try to find one of them in metadata
+    neighbor = None
+    for item in metadata:
+        if item['image_name'] == adj_name_before or item['image_name'] == adj_name_after:
+            neighbor = item
+            break
+
+    if not neighbor:
+        print("No adjacent waypoint found in metadata.")
+        return None
+
+    # Step 4: Compute lat/lon difference
+    lat_diff = abs(best['latitude'] - neighbor['latitude'])
+    lon_diff = abs(best['longitude'] - neighbor['longitude'])
+
+    return lat_diff*5, lon_diff*5
+
 def load_model():
     jit_path = Config.model_path + "_jit.pt"
     if os.path.exists(jit_path):
@@ -127,14 +178,17 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
 
     # Find best match within the grid search space
     best_match = find_best_match(query_feature, nearby_features, metadata)
+    d_y,d_x=lat_lon_diff_with_adjacent_waypoint(query_feature, nearby_features, metadata)
 
     if best_match is None:
         print(f"No match found within the search grid window. Try expanding the search.")
     else:
+        path2 = os.path.join(".", "Data", "hall10_satellite_photos", "gallery_satellite", "0", best_match['image_name'])
+
         print(f"Query Image: {os.path.basename(img_path)}, Match: {best_match['image_name']}, "
               f"Estimated IMU Position: {estimated_position}, Match Coordinates: ({best_match['latitude']}, {best_match['longitude']})")
 
-    return (best_match['latitude'],best_match['longitude'])
+    return (best_match['latitude'],best_match['longitude'],d_y,d_x,path2,img_path)
 
 if __name__ == '__main__':
     main()
@@ -145,4 +199,10 @@ def main(model=load_model(),gallery_grid=load_gallery_data(),last_known_position
     # last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
     # velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
     # dt = 1
-    return process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
+    best_match=[0,0]
+    best_match[0],best_match[1],d_y,d_x,path,img_path=process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
+    if(d_y>d_x):
+        dx_lat, dy_long=calculate_loftr_offset(img_path,path,d_y/640)
+    else:
+        dx_lat, dy_long=calculate_loftr_offset(img_path,path,d_x/640)
+    return (best_match[0]+dx_lat,best_match[1]+dy_long)
