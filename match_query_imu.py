@@ -134,12 +134,15 @@ def process_single_query(model, gallery_grid, last_known_position, velocity, acc
         print(f"Query Image: {os.path.basename(img_path)}, Match: {best_match['image_name']}, "
               f"Estimated IMU Position: {estimated_position}, Match Coordinates: ({best_match['latitude']}, {best_match['longitude']})")
 
-    return estimated_position
+    return (best_match['latitude'],best_match['longitude'])
 
 if __name__ == '__main__':
-    model = load_model()
-    gallery_grid = load_gallery_data()
-    last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
-    velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
-    dt = 1
-    process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
+    main()
+
+def main(model=load_model(),gallery_grid=load_gallery_data(),last_known_position = (26.5115960437853,80.22629763462655),velocity = 8.570,acceleration=0,heading=3.125,dt=1):
+    # model = load_model()
+    # gallery_grid = load_gallery_data()
+    # last_known_position = (26.5115960437853,80.22629763462655)  # Initial starting coordinates
+    # velocity, acceleration, heading = (8.570, 0, 3.125)  # Replace with actual IMU data
+    # dt = 1
+    return process_single_query(model, gallery_grid, last_known_position, velocity, acceleration, heading,dt)
