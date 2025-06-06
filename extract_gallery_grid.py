@@ -10,18 +10,19 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 from sample4geo.model import TimmModel
 import re
-
+import subprocess
+from capture import main as capture_main
 class Config:
     model_path = './university_main/convnext_base.fb_in22k_ft_in1k_384'
     img_size = 384
     batch_size = 128
     gpu_ids = (0,)
     normalize_features = True
-    gallery_folder = './Data/hall10_data/hall10_satellite_photos/gallery_satellite'
+    gallery_folder = './Data/gallery_satellite'
     checkpoint = './university_main/convnext_base.fb_in22k_ft_in1k_384/weights_e1_0.9515.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     num_workers = 4
-    csv_path = './Data/hall10_data/gallery_satellite_image_coordinates.csv'
+    csv_path = './Data/gallery_satellite_image_coordinates_grid.csv'
     output_file = 'gallery_data.npz'
 
 def load_coordinates(csv_path):
@@ -123,4 +124,7 @@ def extract_gallery_features():
     print(f"Saved grid-structured features to {Config.output_file}")
 
 if __name__ == '__main__':
+    print("Starting image capture...")
+    capture_main()
+    print("Starting feature extraction...")
     extract_gallery_features()
